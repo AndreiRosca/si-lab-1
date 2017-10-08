@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class DesUtilTest {
@@ -36,7 +37,7 @@ public class DesUtilTest {
     @Test
     public void canPermuteKeyByPermutationTable() {
         String binaryKey = "0001001100110100010101110111100110011011101111001101111111110001";
-        String permutedKey = util.permuteKey(binaryKey, DesUtil.FIRST_KEY_PERMUTATION_TABLE);
+        String permutedKey = util.permuteUsingTable(binaryKey, DesUtil.FIRST_KEY_PERMUTATION_TABLE);
         assertEquals("11110000110011001010101011110101010101100110011110001111", permutedKey);
     }
 
@@ -107,5 +108,77 @@ public class DesUtilTest {
                 "101111111001000110001101001111010011111100001010",
                 "110010110011110110001011000011100001011111110101"
         });
+    }
+
+    @Test
+    public void canCalculateTheInitialPermutationOfTheMessage() {
+        String message = "0000000100100011010001010110011110001001101010111100110111101111";
+        String permuttedMessage = util.permuteUsingTable(message, DesUtil.INITIAL_MESSAGE_PERMUTATION);
+        assertEquals("1100110000000000110011001111111111110000101010101111000010101010", permuttedMessage);
+    }
+
+    @Test
+    public void canSplitInHalfPermuttedMessage() {
+        String permuttedMessage = "1100110000000000110011001111111111110000101010101111000010101010";
+        Pair<String, String> splittedMessage = util.splitInHalf(permuttedMessage);
+        assertEquals("11001100000000001100110011111111", splittedMessage.getKey());
+        assertEquals("11110000101010101111000010101010", splittedMessage.getValue());
+    }
+
+    @Test
+    public void canExpandInputBlockUsingTheSelectionTable() {
+        String messagePart = "11110000101010101111000010101010";
+        String expandedPart = util.permuteUsingTable(messagePart, DesUtil.E_FUNCTION_SELECTION_TABLE);
+        assertEquals("011110100001010101010101011110100001010101010101", expandedPart);
+    }
+
+    @Test
+    public void canCalculateFunctionF() {
+        String messagePart = "11110000101010101111000010101010";
+        String key = "000110110000001011101111111111000111000001110010";
+        String result = util.applyFunctionF(messagePart, key);
+        assertEquals("00100011010010101010100110111011", result);
+    }
+
+    @Test
+    public void canXorBitSets() {
+        BitSet key = util.toBitSet("000110110000001011101111111111000111000001110010");
+        BitSet eFunc = util.toBitSet("011110100001010101010101011110100001010101010101");
+        BitSet result = util.xorBitSets(key, eFunc);
+        assertEquals(util.toBitSet("011000010001011110111010100001100110010100100111"), result);
+    }
+
+    @Test
+    public void canSplitStringInSixBitBlocks() {
+        String xorResult = "011000010001011110111010100001100110010100100111";
+        String[] sixBitBlocks = util.toSixBitBlocks(xorResult);
+        assertArrayEquals(buildExpectedBlocksArray(), sixBitBlocks);
+    }
+
+    private String[] buildExpectedBlocksArray() {
+        return new String[] {
+                "011000",
+                "010001",
+                "011110",
+                "111010",
+                "100001",
+                "100110",
+                "010100",
+                "100111"
+        };
+    }
+
+    @Test
+    public void canCombineSBoxes() {
+        String[] sixBitBlocks = buildExpectedBlocksArray();
+        String sBoxesResult = util.calculateSBoxes(sixBitBlocks);
+        assertEquals("01011100100000101011010110010111", sBoxesResult);
+    }
+
+    @Test
+    public void canPermuteUsingThePPermutationTable() {
+        String input = "01011100100000101011010110010111";
+        String permutted = util.permuteUsingTable(input, DesUtil.P_PERMUATTION_TABLE);
+        assertEquals("00100011010010101010100110111011", permutted);
     }
 }
