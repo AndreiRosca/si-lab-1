@@ -3,6 +3,7 @@ package md.utm.si.labs.crypto;
 import javafx.util.Pair;
 import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
@@ -180,5 +181,50 @@ public class DesUtilTest {
         String input = "01011100100000101011010110010111";
         String permutted = util.permuteUsingTable(input, DesUtil.P_PERMUATTION_TABLE);
         assertEquals("00100011010010101010100110111011", permutted);
+    }
+
+    @Test
+    public void canSplitInputMessageIntoBlocks() throws UnsupportedEncodingException {
+        String message = "120000001";
+        List<byte[]> blocks = util.makeBlocks(message.getBytes("UTF-8"));
+        assertEquals(2, blocks.size());
+        assertArrayEquals(makeFirstBlock(), blocks.get(0));
+        assertArrayEquals(makeSecondBlock(), blocks.get(1));
+    }
+
+    private byte[] makeSecondBlock() {
+        return new byte[] {
+                0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        };
+    }
+
+    @Test
+    public void canPaddInputMessageWithZeros() throws UnsupportedEncodingException {
+        String message = "12";
+        List<byte[]> blocks = util.makeBlocks(message.getBytes("UTF-8"));
+        assertEquals(1, blocks.size());
+        assertArrayEquals(makeTargetBlock(), blocks.get(0));
+    }
+
+    private byte[] makeFirstBlock() {
+        return new byte[] {
+                0x31, 0x32, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30
+        };
+    }
+
+    private byte[] makeTargetBlock() {
+        return new byte[] {
+                0x31, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        };
+    }
+
+    @Test
+    public void canConvertByteArrayToHexString() {
+        byte[] data = { 0x01,0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xAB, (byte) 0xCD, (byte) 0xEF};
+        byte[] data2 = { 0x12,0x34, 0x56, (byte) 0xAB };
+        String hexString = util.toHexString(data);
+        String hexString2 = util.toHexString(data2);
+        assertEquals("0123456789ABCDEF", hexString);
+        assertEquals("123456AB", hexString2);
     }
 }

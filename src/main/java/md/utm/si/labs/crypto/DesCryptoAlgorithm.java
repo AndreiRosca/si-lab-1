@@ -1,6 +1,8 @@
 package md.utm.si.labs.crypto;
 
 import javafx.util.Pair;
+
+import java.io.UnsupportedEncodingException;
 import java.util.BitSet;
 
 import java.util.List;
@@ -22,15 +24,69 @@ public class DesCryptoAlgorithm implements CryptoAlgorithm {
         String permuttedMessage = desUtil.permuteUsingTable(binaryMessage, DesUtil.INITIAL_MESSAGE_PERMUTATION);
         Pair<String, String> messageParts = desUtil.splitInHalf(permuttedMessage);
         for (int i = 0; i < rotatedKeys.size(); ++i) {
-            String left = messageParts.getValue();
-            String right = messageParts.getKey();
-            String functionResult = desUtil.applyFunctionF(left, rotatedKeys.get(i));
-            right = xor(right, functionResult);
-            messageParts = new Pair<>(left, right);
+            messageParts = performIteration(messageParts, rotatedKeys.get(i));
         }
         String roundsResult = reverseAndJoin(messageParts);
         String permutted = desUtil.permuteUsingTable(roundsResult, desUtil.INVERSE_INITIAL_PERMUTATION);
         return toHex(permutted);
+    }
+
+    @Override
+    public byte[] encrypt(byte[] data, byte[] key) {
+        List<byte[]> dataBlocks = desUtil.makeBlocks(data);
+        String hexKey = desUtil.toHexString(key);
+        StringBuilder result = new StringBuilder();
+        for (byte[] block : dataBlocks) {
+            String hexData = desUtil.toHexString(block);
+            String encrypted = encrypt(hexData, hexKey);
+            result.append(encrypted);
+        }
+        return getEncryptedData(result.toString());
+    }
+
+    private byte[] getEncryptedData(String data) {
+        try {
+            return data.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Pair<String, String> performIteration(Pair<String, String> messageParts, String rotatedKey) {
+        String left = messageParts.getValue();
+        String right = messageParts.getKey();
+        String functionResult = desUtil.applyFunctionF(left, rotatedKey);
+        right = xor(right, functionResult);
+        return new Pair<>(left, right);
+    }
+
+    @Override
+    public String decrypt(String hexMessage, String hexKey) {
+        String binaryKey = desUtil.toBinary(hexKey);
+        String binaryMessage = desUtil.toBinary(hexMessage);
+        String permutedKey = desUtil.permuteUsingTable(binaryKey, DesUtil.FIRST_KEY_PERMUTATION_TABLE);
+        List<String> rotatedKeys = desUtil.produceRotatedKeys(permutedKey);
+        String permuttedMessage = desUtil.permuteUsingTable(binaryMessage, DesUtil.INITIAL_MESSAGE_PERMUTATION);
+        Pair<String, String> messageParts = desUtil.splitInHalf(permuttedMessage);
+        for (int i = rotatedKeys.size() - 1; i >= 0; --i) {
+            messageParts = performIteration(messageParts, rotatedKeys.get(i));
+        }
+        String roundsResult = reverseAndJoin(messageParts);
+        String permutted = desUtil.permuteUsingTable(roundsResult, desUtil.INVERSE_INITIAL_PERMUTATION);
+        return toHex(permutted);
+    }
+
+    @Override
+    public byte[] decrypt(byte[] data, byte[] key) {
+        List<byte[]> dataBlocks = desUtil.makeBlocks(data);
+        String hexKey = desUtil.toHexString(key);
+        StringBuilder result = new StringBuilder();
+        for (byte[] block : dataBlocks) {
+            String hexData = desUtil.toHexString(block);
+            String decrypted = decrypt(hexData, hexKey);
+            result.append(decrypted);
+        }
+        return getEncryptedData(result.toString());
     }
 
     private String toHex(String binaryString) {

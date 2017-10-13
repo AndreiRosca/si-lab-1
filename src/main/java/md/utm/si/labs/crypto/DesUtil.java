@@ -2,6 +2,7 @@ package md.utm.si.labs.crypto;
 
 import javafx.util.Pair;
 
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 public class DesUtil {
@@ -348,6 +349,42 @@ public class DesUtil {
             if (entry.getValue().equals(binaryNumber))
                 return entry.getKey();
         }
+        return null;
+    }
+
+    public String toHexString(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hexDigit = Integer.toHexString(b & 0xff);
+            if (binaryDigits.containsKey(hexDigit))
+                hexDigit = "0" + hexDigit;
+            hexString.append(hexDigit.toUpperCase());
+        }
+        return hexString.toString();
+    }
+
+    private byte[] makeBlock(byte[] bytes, int blockIndex, int blockSize) {
+        byte[] block = new byte[blockSize];
+        System.arraycopy(bytes, blockIndex * blockSize, block, 0, blockSize);
+        return block;
+    }
+
+    public List<byte[]> makeBlocks(byte[] messageBytes) {
+        List<byte[]> blocks = new ArrayList<>();
+        int numberOfBlocks = messageBytes.length / 8;
+        int remainingBytes = messageBytes.length % 8;
+        for (int i = 0; i < numberOfBlocks; ++i) {
+            blocks.add(makeBlock(messageBytes, i,8));
+        }
+        if (remainingBytes != 0) {
+            byte[] block = new byte[8];
+            System.arraycopy(messageBytes, numberOfBlocks * 8, block, 0, remainingBytes);
+            blocks.add(block);
+        }
+        return blocks;
+    }
+
+    public String asHexString(byte[] data) {
         return null;
     }
 }
