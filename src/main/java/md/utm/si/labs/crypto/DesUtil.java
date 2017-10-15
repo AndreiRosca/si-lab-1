@@ -352,6 +352,17 @@ public class DesUtil {
         return null;
     }
 
+    public String hexStringToRegularString(String hexString) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < hexString.length(); i += 2) {
+            if (hexString.charAt(i) == '0' && hexString.charAt(i + 1) == '0')
+                break;
+            String hexByte = "" + hexString.charAt(i) + hexString.charAt(i + 1);
+            result.append(Character.toString((char) Integer.parseInt(hexByte, 16)));
+        }
+        return result.toString();
+    }
+
     public String toHexString(byte[] bytes) {
         StringBuilder hexString = new StringBuilder();
         for (byte b : bytes) {
@@ -370,21 +381,25 @@ public class DesUtil {
     }
 
     public List<byte[]> makeBlocks(byte[] messageBytes) {
-        List<byte[]> blocks = new ArrayList<>();
-        int numberOfBlocks = messageBytes.length / 8;
-        int remainingBytes = messageBytes.length % 8;
-        for (int i = 0; i < numberOfBlocks; ++i) {
-            blocks.add(makeBlock(messageBytes, i,8));
-        }
-        if (remainingBytes != 0) {
-            byte[] block = new byte[8];
-            System.arraycopy(messageBytes, numberOfBlocks * 8, block, 0, remainingBytes);
-            blocks.add(block);
-        }
-        return blocks;
+        return makeBlocks(messageBytes, 8);
     }
 
     public String asHexString(byte[] data) {
         return null;
+    }
+
+    public List<byte[]> makeBlocks(byte[] messageBytes, int blockSize) {
+        List<byte[]> blocks = new ArrayList<>();
+        int numberOfBlocks = messageBytes.length / blockSize;
+        int remainingBytes = messageBytes.length % blockSize;
+        for (int i = 0; i < numberOfBlocks; ++i) {
+            blocks.add(makeBlock(messageBytes, i,blockSize));
+        }
+        if (remainingBytes != 0) {
+            byte[] block = new byte[blockSize];
+            System.arraycopy(messageBytes, numberOfBlocks * blockSize, block, 0, remainingBytes);
+            blocks.add(block);
+        }
+        return blocks;
     }
 }
