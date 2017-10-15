@@ -3,6 +3,7 @@ package md.utm.si.labs.crypto;
 import javafx.util.Pair;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.BitSet;
 
 import java.util.List;
@@ -78,15 +79,15 @@ public class DesCryptoAlgorithm implements CryptoAlgorithm {
 
     @Override
     public byte[] decrypt(byte[] data, byte[] key) {
-        List<byte[]> dataBlocks = desUtil.makeBlocks(data);
+        List<byte[]> dataBlocks = desUtil.makeBlocks(data, 16);
         String hexKey = desUtil.toHexString(key);
         StringBuilder result = new StringBuilder();
         for (byte[] block : dataBlocks) {
-            String hexData = desUtil.toHexString(block);
+            String hexData = new String(block);
             String decrypted = decrypt(hexData, hexKey);
             result.append(decrypted);
         }
-        return getEncryptedData(result.toString());
+        return getEncryptedData(desUtil.hexStringToRegularString(result.toString()));
     }
 
     private String toHex(String binaryString) {
